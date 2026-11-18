@@ -1,0 +1,41 @@
+# Gradle files
+.gradle/
+build/
+*/build/
+*/build/
+
+# Local configuration files
+local.properties
+gradle.properties
+*.iml
+
+# IDE files
+.idea/
+*.iws
+*.ipr
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Android Studio captures
+captures/
+
+# External native build
+.externalNativeBuild/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Build outputs
+*.apk
+*.aar
+*.ap_
+
+# Proguard
+proguard/
+
+# Backup files
+*~
+*.bak

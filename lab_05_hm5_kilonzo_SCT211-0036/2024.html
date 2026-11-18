@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sensor Inventory App — Lab Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f8f7;--card:#fff;--ink:#1c2b29;--mute:#586967;--line:#cddad8;--acc:#0f766e;--accbg:#e3f2ef;--warn:#fff4dc;--warnl:#e0b252;--tip:#e8f1fb;--tipl:#7aa7d9;--code:#142120}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:2rem;line-height:1.2;margin:.2em 0 .1em}
+h2{font-size:1.5rem;margin:2.4em 0 .6em;padding-bottom:.35em;border-bottom:2px solid var(--line)}
+h3{font-size:1.1rem;margin:1.8em 0 .4em}
+p{margin:.6em 0;max-width:72ch}
+.kicker{color:var(--acc);font-weight:600;font-size:.9rem}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0 0;color:var(--mute);font-size:.92rem}
+.meta b{color:var(--ink);font-weight:600}
+.fill{border-bottom:1.5px dashed var(--acc);padding:0 4px;min-width:5em;display:inline-block;color:var(--acc)}
+.fill:focus{outline:2px solid var(--acc);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card b{display:block;margin-bottom:2px}.card span{color:var(--mute);font-size:.92rem}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:.92rem;margin:14px 0}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--accbg);font-weight:600}tr:last-child td{border-bottom:0}
+td code,p code,li code{background:var(--accbg);padding:1px 5px;border-radius:5px;font-size:.88em}
+.res{cursor:pointer;text-align:center;width:64px;font-size:1.1rem;user-select:none}
+.ed{min-width:9em;color:var(--acc)}
+.note{border-left:4px solid;border-radius:8px;padding:10px 14px;margin:16px 0}
+.note.warn{background:var(--warn);border-color:var(--warnl)}.note.tip{background:var(--tip);border-color:var(--tipl)}
+.note.draft{background:var(--card);border:1px dashed var(--warnl);border-left:4px solid var(--warnl)}
+.note p{margin:.3em 0}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.9rem}
+.chip.ok{background:var(--accbg);border-color:var(--acc)}.chip.bad{background:var(--warn);border-color:var(--warnl)}
+.arr{color:var(--mute)}
+.code{margin:14px 0;border-radius:12px;overflow:hidden;background:var(--code);color:#dbe8e6}
+.code figcaption{padding:8px 14px;font:500 .8rem ui-monospace,Menlo,Consolas,monospace;background:#0b1514;color:#9fb8b4}
+.code figcaption b{color:#6fd3c4;font-weight:500}
+.code pre{margin:0;padding:12px 0;overflow-x:auto;font:400 .82rem/1.55 ui-monospace,Menlo,Consolas,monospace;counter-reset:n}
+.l::before{counter-increment:n;content:counter(n);display:inline-block;width:2.4em;margin-right:1.1em;text-align:right;color:#5f7a77;user-select:none}
+.code i{font-style:normal}.c{color:#7f9a97;font-style:italic!important}.s{color:#e6c07b}.k{color:#7fd1c3}.a{color:#e5a3c5}.t{color:#8ab4f8}.n{color:#f0a77a}
+details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--acc)}details .code{margin:0;border-radius:0 0 12px 12px}
+.tree{font:.85rem/1.6 ui-monospace,Menlo,Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;white-space:pre;overflow-x:auto}
+.step{display:grid;grid-template-columns:44px 1fr;gap:4px 14px;margin:26px 0}
+.step .no{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--mute)}
+.step h3{margin:6px 0 0}.step p,.step .phone{grid-column:2}
+.phone{display:grid;place-items:center;width:210px;height:420px;border:8px solid #2a2f33;border-radius:28px;background:var(--card);color:var(--mute);font-size:.85rem;text-align:center;padding:12px;cursor:pointer;overflow:hidden}
+.phone.over{outline:3px dashed var(--acc)}.phone input{display:none}.phone img{width:100%;height:100%;object-fit:contain}
+ul,ol{max-width:72ch}li{margin:.25em 0}
+@media print{@page{size:A4;margin:14mm}body{background:#fff;color:#000;font-size:11pt}main{padding:0;max-width:none}
+.hint{display:none}.code pre{white-space:pre-wrap;overflow:visible}.code,.card,.note,table,.step{break-inside:avoid}h2{break-after:avoid}}
+.phone{width:254px;height:466px;border:2px solid var(--line);border-radius:28px;padding:0;background:#161216}
+.phone img{object-fit:cover}.card .ic{font-size:1.4rem;display:block}
+.who{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--mute);margin:14px 0 0;font-size:.95rem}
+.sub{color:var(--mute);margin:.2em 0 0}
+@media print{.step{break-inside:avoid}.phone{border-color:#999}}
+</style></head><body><main>
+<p class="kicker">MOBILE APPLICATION DEVELOPMENT &bull; LAB WORK</p>
+<h1>Building a Sensor Inventory App with RecyclerView & SensorManager</h1>
+<p class="sub">An Android (Java) walkthrough: discovering device sensors, displaying detailed metadata in a RecyclerView, and comparing sensors for MavunoLink agricultural tracking use cases.</p>
+<div class="who"><span>&#128100; <b>Patrick Kilonzo Mbithi</b></span><span>&#127380; SCT211-0036/2024</span><span>&#127891; BSc Computer Science</span><span>&#128104;&#8205;&#127979; Dr. Lawrence Nderu</span></div>
+
+<h2>1 &middot; Lab Objective</h2>
+<p>The goal of this lab is to build an Android application that enumerates all available hardware sensors on a device, presents their detailed specifications in an expandable RecyclerView, and provides a comparative analysis focused on motion tracking sensors relevant to the MavunoLink agricultural platform. By the end of this lab the app can:</p>
+<div class="grid">
+<div class="card"><span class="ic">&#128247;</span><b>Discover sensors</b><span>Use SensorManager.getSensorList(TYPE_ALL) to enumerate every hardware sensor.</span></div>
+<div class="card"><span class="ic">&#128197;</span><b>Display metadata</b><span>Show vendor, range, resolution, power, min/max delay, FIFO capacity, reporting mode, and wake-up capability.</span></div>
+<div class="card"><span class="ic">&#9989;</span><b>Expandable cards</b><span>RecyclerView items toggle between summary and full detail view on tap.</span></div>
+<div class="card"><span class="ic">&#128172;</span><b>Device profiling</b><span>Detect emulator vs physical device; show model, Android version, build fingerprint.</span></div>
+<div class="card"><span class="ic">&#128200;</span><b>MavunoLink comparison</b><span>Analyze accelerometer vs gyroscope for 6-DoF motion tracking in agricultural contexts.</span></div>
+</div>
+<table><tr><th>Component</th><th>Purpose in this app</th></tr>
+<tr><td><code>SensorManager</code></td><td>System service to query sensor hardware; <code>getSensorList(TYPE_ALL)</code> returns all sensors</td></tr>
+<tr><td><code>RecyclerView</code> + <code>LinearLayoutManager</code></td><td>Efficiently renders scrollable list of sensor cards with view recycling</td></tr>
+<tr><td><code>CardView</code></td><td>Material card containers for device info, sensor inventory, and comparison sections</td></tr>
+<tr><td><code>Sensor</code> class</td><td>Metadata holder: type, vendor, range, resolution, power, delay, FIFO, reporting mode, wake-up</td></tr>
+<tr><td><code>Build</code> class</td><td>Device fingerprinting: MODEL, MANUFACTURER, VERSION, FINGERPRINT, HARDWARE for emulator detection</td></tr>
+<tr><td><code>ConstraintLayout</code> + <code>ScrollView</code></td><td>Root layout with scrollable content area for varying screen sizes</td></tr>
+</table>
+
+<h2>2 &middot; How the App Works</h2>
+<p>The app launches, queries the sensor service, populates three UI sections, and presents a comparative analysis tailored to MavunoLink's agricultural tracking requirements.</p>
+<div class="flow"><span class="chip">Launch app</span><span class="arr">&rarr;</span><span class="chip">SensorManager query</span><span class="arr">&rarr;</span><span class="chip">Populate device info</span><span class="arr">&rarr;</span><span class="chip">Build RecyclerView</span><span class="arr">&rarr;</span><span class="chip">Run comparison logic</span></div>
+<div class="flow"><span class="chip ok">Sensors found</span><span class="arr">&rarr;</span><span class="chip ok">Show sensor cards</span><span class="arr">&rarr;</span><span class="chip ok">Enable expand on tap</span><span class="arr">or</span><span class="chip bad">No sensors</span><span class="arr">&rarr;</span><span class="chip bad">Show empty state</span></div>
+
+<h3>Project Structure</h3>
+<div class="tree">app/
+├─ src/main/java/com/example/sensorinventory/MainActivity.java  ← logic (Sections 4-6)
+├─ src/main/res/layout/activity_main.xml                       ← main UI (Section 3)
+├─ src/main/res/layout/item_sensor.xml                         ← sensor card item (Section 3.5)
+├─ src/main/res/values/strings.xml                             ← all string resources
+├─ src/main/res/values/themes.xml                              ← Material3 theme
+└─ src/main/res/drawable/badge_background.xml                  ← sensor count badge</div>
+<div class="note warn"><p>&#9888;&#65039; <b>Watch out.</b> The app requires <code>android.hardware.sensor.*</code> permissions implicitly via SensorManager. Emulators often return a minimal sensor set (accelerometer only). Always test on a physical device for meaningful sensor inventory and comparison results.</p></div>
+
+<h2>3 &middot; User Interface Layouts</h2>
+<p>The main screen uses a <code>ConstraintLayout</code> root with a <code>ScrollView</code> &rarr; <code>LinearLayout</code> containing three <code>CardView</code> sections. Each sensor in the inventory is rendered via <code>item_sensor.xml</code> inflated by the RecyclerView adapter.</p>
+
+<h3>3.1 Root Layout (activity_main.xml)</h3>
+<p>The root <code>ConstraintLayout</code> applies window insets padding for edge-to-edge display. A <code>ScrollView</code> with <code>fillViewport=true</code> ensures content fills the screen even when sparse.</p>
+<figure class="code"><figcaption>activity_main.xml <b>&middot; root structure</b></figcaption><pre><span class="l"><i class="c"><?xml version="1.0" encoding="utf-8"?></i></span>
+<span class="l"><i class="k"><androidx.constraintlayout.widget.ConstraintLayout</i></span>
+<span class="l">    <i class="a">xmlns:android</i>=<i class="s">"http://schemas.android.com/apk/res/android"</i></span>
+<span class="l">    <i class="a">xmlns:app</i>=<i class="s">"http://schemas.android.com/apk/res-auto"</i></span>
+<span class="l">    <i class="a">xmlns:tools</i>=<i class="s">"http://schemas.android.com/tools"</i></span>
+<span class="l">    <i class="a">android:id</i>=<i class="s">"@+id/main"</i></span>
+<span class="l">    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">    <i class="a">android:layout_height</i>=<i class="s">"match_parent"</i></span>
+<span class="l">    <i class="a">android:padding</i>=<i class="s">"16dp"</i></span>
+<span class="l">    <i class="a">android:background</i>=<i class="s">"?android:attr/colorBackground"</i></span>
+<span class="l">    <i class="a">tools:context</i>=<i class="s">".MainActivity"</i>></span>
+<span class="l"></span>
+<span class="l">    <i class="k"><ScrollView</i></span>
+<span class="l">        <i class="a">android:id</i>=<i class="s">"@+id/scrollView"</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:fillViewport</i>=<i class="s">"true"</i>></span>
+<span class="l"></span>
+<span class="l">        <i class="k"><LinearLayout</i></span>
+<span class="l">            <i class="a">android:id</i>=<i class="s">"@+id/contentLayout"</i></span>
+<span class="l">            <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">            <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">            <i class="a">android:orientation</i>=<i class="s">"vertical"</i></span>
+<span class="l">            <i class="a">android:paddingBottom</i>=<i class="s">"24dp"</i>></span>
+<span class="l">            <i class="c"><!-- Three CardView sections go here --></i></span>
+<span class="l">        <i class="k"></LinearLayout</i>></span>
+<span class="l">    <i class="k"></ScrollView</i>></span>
+<span class="l"><i class="k"></androidx.constraintlayout.widget.ConstraintLayout</i>></span>
+</pre></figure>
+
+<h3>3.2 Device Info Card</h3>
+<p>First card displays device model, Android version, environment type (emulator/physical), and build fingerprint. Uses a vertical <code>LinearLayout</code> inside the CardView.</p>
+<figure class="code"><figcaption>activity_main.xml <b>&middot; device info card</b></figcaption><pre><span class="l">        <i class="c"><!-- Device Info Card --></i></span>
+<span class="l">        <i class="k"><androidx.cardview.widget.CardView</i></span>
+<span class="l">            <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">            <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">            <i class="a">android:layout_marginBottom</i>=<i class="s">"16dp"</i></span>
+<span class="l">            <i class="a">app:cardCornerRadius</i>=<i class="s">"8dp"</i></span>
+<span class="l">            <i class="a">app:cardElevation</i>=<i class="s">"2dp"</i></span>
+<span class="l">            <i class="a">app:cardBackgroundColor</i>=<i class="s">"?attr/colorSurface"</i>></span>
+<span class="l"></span>
+<span class="l">            <i class="k"><LinearLayout</i></span>
+<span class="l">                <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                <i class="a">android:orientation</i>=<i class="s">"vertical"</i></span>
+<span class="l">                <i class="a">android:padding</i>=<i class="s">"16dp"</i>></span>
+<span class="l"></span>
+<span class="l">                <i class="k"><TextView</i></span>
+<span class="l">                    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                    <i class="a">android:text</i>=<i class="s">"@string/device_info_title"</i></span>
+<span class="l">                    <i class="a">android:textSize</i>=<i class="s">"18sp"</i></span>
+<span class="l">                    <i class="a">android:textStyle</i>=<i class="s">"bold"</i></span>
+<span class="l">                    <i class="a">android:textColor</i>=<i class="s">"?attr/colorPrimary"</i> /></span>
+<span class="l"></span>
+<span class="l">                <i class="k"><TextView</i></span>
+<span class="l">                    <i class="a">android:id</i>=<i class="s">"@+id/deviceInfoText"</i></span>
+<span class="l">                    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                    <i class="a">android:layout_marginTop</i>=<i class="s">"8dp"</i></span>
+<span class="l">                    <i class="a">android:textSize</i>=<i class="s">"14sp"</i></span>
+<span class="l">                    <i class="a">android:lineSpacingExtra</i>=<i class="s">"4dp"</i></span>
+<span class="l">                    <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">            <i class="k"></LinearLayout</i>></span>
+<span class="l">        <i class="k"></androidx.cardview.widget.CardView</i>></span>
+</pre></figure>
+
+<h3>3.3 Sensor Inventory Card</h3>
+<p>Second card shows a sensor count badge and the RecyclerView. An empty state TextView is shown when no sensors are found.</p>
+<figure class="code"><figcaption>activity_main.xml <b>&middot; sensor inventory card</b></figcaption><pre><span class="l">        <i class="c"><!-- Sensor Inventory Card --></i></span>
+<span class="l">        <i class="k"><androidx.cardview.widget.CardView</i></span>
+<span class="l">            <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">            <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">            <i class="a">android:layout_marginBottom</i>=<i class="s">"16dp"</i></span>
+<span class="l">            <i class="a">app:cardCornerRadius</i>=<i class="s">"8dp"</i></span>
+<span class="l">            <i class="a">app:cardElevation</i>=<i class="s">"2dp"</i></span>
+<span class="l">            <i class="a">app:cardBackgroundColor</i>=<i class="s">"?attr/colorSurface"</i>></span>
+<span class="l"></span>
+<span class="l">            <i class="k"><LinearLayout</i></span>
+<span class="l">                <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                <i class="a">android:orientation</i>=<i class="s">"vertical"</i></span>
+<span class="l">                <i class="a">android:padding</i>=<i class="s">"16dp"</i>></span>
+<span class="l"></span>
+<span class="l">                <i class="c"><!-- Title with count badge --></i></span>
+<span class="l">                <i class="k"><LinearLayout</i></span>
+<span class="l">                    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                    <i class="a">android:orientation</i>=<i class="s">"horizontal"</i></span>
+<span class="l">                    <i class="a">android:gravity</i>=<i class="s">"center_vertical"</i>></span>
+<span class="l"></span>
+<span class="l">                    <i class="k"><TextView</i></span>
+<span class="l">                        <i class="a">android:layout_width</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                        <i class="a">android:text</i>=<i class="s">"@string/sensor_inventory_title"</i></span>
+<span class="l">                        <i class="a">android:textSize</i>=<i class="s">"18sp"</i></span>
+<span class="l">                        <i class="a">android:textStyle</i>=<i class="s">"bold"</i></span>
+<span class="l">                        <i class="a">android:textColor</i>=<i class="s">"?attr/colorPrimary"</i> /></span>
+<span class="l"></span>
+<span class="l">                    <i class="k"><TextView</i></span>
+<span class="l">                        <i class="a">android:id</i>=<i class="s">"@+id/sensorCountText"</i></span>
+<span class="l">                        <i class="a">android:layout_width</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                        <i class="a">android:layout_marginStart</i>=<i class="s">"8dp"</i></span>
+<span class="l">                        <i class="a">android:background</i>=<i class="s">"@drawable/badge_background"</i></span>
+<span class="l">                        <i class="a">android:paddingHorizontal</i>=<i class="s">"8dp"</i></span>
+<span class="l">                        <i class="a">android:paddingVertical</i>=<i class="s">"2dp"</i></span>
+<span class="l">                        <i class="a">android:text</i>=<i class="s">"0"</i></span>
+<span class="l">                        <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnPrimary"</i></span>
+<span class="l">                        <i class="a">android:textSize</i>=<i class="s">"12sp"</i></span>
+<span class="l">                        <i class="a">android:textStyle</i>=<i class="s">"bold"</i> /></span>
+<span class="l">                <i class="k"></LinearLayout</i>></span>
+<span class="l"></span>
+<span class="l">                <i class="c"><!-- Empty state --></i></span>
+<span class="l">                <i class="k"><TextView</i></span>
+<span class="l">                    <i class="a">android:id</i>=<i class="s">"@+id/emptyStateText"</i></span>
+<span class="l">                    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                    <i class="a">android:layout_marginTop</i>=<i class="s">"16dp"</i></span>
+<span class="l">                    <i class="a">android:gravity</i>=<i class="s">"center"</i></span>
+<span class="l">                    <i class="a">android:text</i>=<i class="s">"@string/no_sensors_found"</i></span>
+<span class="l">                    <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i></span>
+<span class="l">                    <i class="a">android:textSize</i>=<i class="s">"14sp"</i></span>
+<span class="l">                    <i class="a">android:visibility</i>=<i class="s">"gone"</i> /></span>
+<span class="l"></span>
+<span class="l">                <i class="c"><!-- RecyclerView for sensor list --></i></span>
+<span class="l">                <i class="k"><androidx.recyclerview.widget.RecyclerView</i></span>
+<span class="l">                        <i class="a">android:id</i>=<i class="s">"@+id/sensorRecyclerView"</i></span>
+<span class="l">                        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                        <i class="a">android:layout_marginTop</i>=<i class="s">"8dp"</i></span>
+<span class="l">                        <i class="a">android:nestedScrollingEnabled</i>=<i class="s">"false"</i> /></span>
+<span class="l">            <i class="k"></LinearLayout</i>></span>
+<span class="l">        <i class="k"></androidx.cardview.widget.CardView</i>></span>
+</pre></figure>
+<div class="note tip"><p>&#128161; <b>Tip.</b> <code>nestedScrollingEnabled="false"</code> on the RecyclerView prevents scroll conflicts with the parent ScrollView. The RecyclerView height is <code>wrap_content</code> so it expands to show all items within the scrolling container.</p></div>
+
+<h3>3.4 Comparison Card</h3>
+<p>Third card presents the MavunoLink sensor comparison analysis as formatted text.</p>
+<figure class="code"><figcaption>activity_main.xml <b>&middot; comparison card</b></figcaption><pre><span class="l">        <i class="c"><!-- Comparison Card --></i></span>
+<span class="l">        <i class="k"><androidx.cardview.widget.CardView</i></span>
+<span class="l">            <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">            <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">            <i class="a">app:cardCornerRadius</i>=<i class="s">"8dp"</i></span>
+<span class="l">            <i class="a">app:cardElevation</i>=<i class="s">"2dp"</i></span>
+<span class="l">            <i class="a">app:cardBackgroundColor</i>=<i class="s">"?attr/colorSurface"</i>></span>
+<span class="l"></span>
+<span class="l">            <i class="k"><LinearLayout</i></span>
+<span class="l">                <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                <i class="a">android:orientation</i>=<i class="s">"vertical"</i></span>
+<span class="l">                <i class="a">android:padding</i>=<i class="s">"16dp"</i>></span>
+<span class="l"></span>
+<span class="l">                <i class="k"><TextView</i></span>
+<span class="l">                    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                    <i class="a">android:text</i>=<i class="s">"@string/comparison_title"</i></span>
+<span class="l">                    <i class="a">android:textSize</i>=<i class="s">"18sp"</i></span>
+<span class="l">                    <i class="a">android:textStyle</i>=<i class="s">"bold"</i></span>
+<span class="l">                    <i class="a">android:textColor</i>=<i class="s">"?attr/colorPrimary"</i> /></span>
+<span class="l"></span>
+<span class="l">                <i class="k"><TextView</i></span>
+<span class="l">                    <i class="a">android:id</i>=<i class="s">"@+id/comparisonText"</i></span>
+<span class="l">                    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">                    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">                    <i class="a">android:layout_marginTop</i>=<i class="s">"8dp"</i></span>
+<span class="l">                    <i class="a">android:textSize</i>=<i class="s">"13sp"</i></span>
+<span class="l">                    <i class="a">android:lineSpacingExtra</i>=<i class="s">"4dp"</i></span>
+<span class="l">                    <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">            <i class="k"></LinearLayout</i>></span>
+<span class="l">        <i class="k"></androidx.cardview.widget.CardView</i>></span>
+</pre></figure>
+
+<h3>3.5 Sensor Item Layout (item_sensor.xml)</h3>
+<p>Each sensor is a CardView with a summary header (name + type) and an expandable details container. A divider and toggle label provide visual affordance.</p>
+<figure class="code"><figcaption>item_sensor.xml <b>&middot; complete</b></figcaption><pre><span class="l"><i class="c"><?xml version="1.0" encoding="utf-8"?></i></span>
+<span class="l"><i class="k"><androidx.cardview.widget.CardView</i> <i class="a">xmlns:android</i>=<i class="s">"http://schemas.android.com/apk/res/android"</i></span>
+<span class="l">    <i class="a">xmlns:app</i>=<i class="s">"http://schemas.android.com/apk/res-auto"</i></span>
+<span class="l">    <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">    <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">    <i class="a">android:layout_marginBottom</i>=<i class="s">"8dp"</i></span>
+<span class="l">    <i class="a">app:cardCornerRadius</i>=<i class="s">"6dp"</i></span>
+<span class="l">    <i class="a">app:cardElevation</i>=<i class="s">"1dp"</i></span>
+<span class="l">    <i class="a">app:cardUseCompatPadding</i>=<i class="s">"true"</i></span>
+<span class="l">    <i class="a">app:cardBackgroundColor</i>=<i class="s">"?attr/colorSurface"</i>></span>
+<span class="l"></span>
+<span class="l">    <i class="k"><LinearLayout</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">        <i class="a">android:orientation</i>=<i class="s">"vertical"</i></span>
+<span class="l">        <i class="a">android:padding</i>=<i class="s">"12dp"</i>></span>
+<span class="l"></span>
+<span class="l">    <i class="k"><TextView</i></span>
+<span class="l">        <i class="a">android:id</i>=<i class="s">"@+id/sensorNameText"</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">        <i class="a">android:textSize</i>=<i class="s">"15sp"</i></span>
+<span class="l">        <i class="a">android:textStyle</i>=<i class="s">"bold"</i></span>
+<span class="l">        <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurface"</i> /></span>
+<span class="l"></span>
+<span class="l">    <i class="k"><TextView</i></span>
+<span class="l">        <i class="a">android:id</i>=<i class="s">"@+id/sensorTypeText"</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">        <i class="a">android:layout_marginTop</i>=<i class="s">"4dp"</i></span>
+<span class="l">        <i class="a">android:textSize</i>=<i class="s">"12sp"</i></span>
+<span class="l">        <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l"></span>
+<span class="l">    <i class="c"><!-- Expandable details container --></i></span>
+<span class="l">    <i class="k"><LinearLayout</i></span>
+<span class="l">        <i class="a">android:id</i>=<i class="s">"@+id/detailsContainer"</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">        <i class="a">android:layout_marginTop</i>=<i class="s">"8dp"</i></span>
+<span class="l">        <i class="a">android:orientation</i>=<i class="s">"vertical"</i></span>
+<span class="l">        <i class="a">android:visibility</i>=<i class="s">"gone"</i>></span>
+<span class="l"></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorVendorText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorRangeText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorResolutionText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorPowerText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorMinDelayText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorMaxDelayText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorFifoReservedText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorFifoMaxText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorStringTypeText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorReportingModeText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">        <i class="k"><TextView</i> <i class="a">android:id</i>=<i class="s">"@+id/sensorWakeupText"</i> <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i> <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i> <i class="a">android:layout_marginTop</i>=<i class="s">"2dp"</i> <i class="a">android:textSize</i>=<i class="s">"12sp"</i> <i class="a">android:textColor</i>=<i class="s">"?attr/colorOnSurfaceVariant"</i> /></span>
+<span class="l">    <i class="k"></LinearLayout</i>></span>
+<span class="l"></span>
+<span class="l">    <i class="c"><!-- Divider and toggle label --></i></span>
+<span class="l">    <i class="k"><View</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"1dp"</i></span>
+<span class="l">        <i class="a">android:layout_marginTop</i>=<i class="s">"8dp"</i></span>
+<span class="l">        <i class="a">android:layout_marginBottom</i>=<i class="s">"4dp"</i></span>
+<span class="l">        <i class="a">android:background</i>=<i class="s">"?attr/colorOutlineVariant"</i> /></span>
+<span class="l"></span>
+<span class="l">    <i class="k"><TextView</i></span>
+<span class="l">        <i class="a">android:id</i>=<i class="s">"@+id/toggleDetailsText"</i></span>
+<span class="l">        <i class="a">android:layout_width</i>=<i class="s">"match_parent"</i></span>
+<span class="l">        <i class="a">android:layout_height</i>=<i class="s">"wrap_content"</i></span>
+<span class="l">        <i class="a">android:text</i>=<i class="s">"@string/show_details"</i></span>
+<span class="l">        <i class="a">android:textSize</i>=<i class="s">"12sp"</i></span>
+<span class="l">        <i class="a">android:textColor</i>=<i class="s">"?attr/colorTertiary"</i></span>
+<span class="l">        <i class="a">android:gravity</i>=<i class="s">"end"</i> /></span>
+<span class="l"><i class="k"></LinearLayout</i>></span>
+<span class="l"><i class="k"></androidx.cardview.widget.CardView</i>></span>
+</pre></figure>
+
+<h2>4 &middot; Activity Logic (MainActivity.java)</h2>
+<p>The Activity performs four primary tasks: <b>initialize views &rarr; populate device info &rarr; populate sensor inventory &rarr; run MavunoLink comparison</b>.</p>
+
+<h3>4.1 Imports and Field Declarations</h3>
+<p>Fields are declared at class level for view references, the SensorManager, and the RecyclerView adapter.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; imports & fields</b></figcaption><pre><span class="l"><i class="k">package</i> com.example.sensorinventory;</span>
+<span class="l"></span>
+<span class="l"><i class="k">import</i> android.content.Context;</span>
+<span class="l"><i class="k">import</i> android.hardware.Sensor;</span>
+<span class="l"><i class="k">import</i> android.hardware.SensorManager;</span>
+<span class="l"><i class="k">import</i> android.os.Build;</span>
+<span class="l"><i class="k">import</i> android.os.Bundle;</span>
+<span class="l"><i class="k">import</i> android.util.Log;</span>
+<span class="l"><i class="k">import</i> android.view.LayoutInflater;</span>
+<span class="l"><i class="k">import</i> android.view.View;</span>
+<span class="l"><i class="k">import</i> android.view.ViewGroup;</span>
+<span class="l"><i class="k">import</i> android.widget.TextView;</span>
+<span class="l"></span>
+<span class="l"><i class="k">import</i> androidx.activity.EdgeToEdge;</span>
+<span class="l"><i class="k">import</i> androidx.appcompat.app.AppCompatActivity;</span>
+<span class="l"><i class="k">import</i> androidx.core.graphics.Insets;</span>
+<span class="l"><i class="k">import</i> androidx.core.view.ViewCompat;</span>
+<span class="l"><i class="k">import</i> androidx.core.view.WindowInsetsCompat;</span>
+<span class="l"><i class="k">import</i> androidx.recyclerview.widget.LinearLayoutManager;</span>
+<span class="l"><i class="k">import</i> androidx.recyclerview.widget.RecyclerView;</span>
+<span class="l"></span>
+<span class="l"><i class="k">import</i> java.util.ArrayList;</span>
+<span class="l"><i class="k">import</i> java.util.List;</span>
+<span class="l"><i class="k">import</i> java.util.Locale;</span>
+<span class="l"></span>
+<span class="l"><i class="k">public</i> <i class="k">class</i> <i class="t">MainActivity</i> <i class="k">extends</i> <i class="t">AppCompatActivity</i> {</span>
+<span class="l"></span>
+<span class="l">    <i class="k">private</i> <i class="k">static</i> <i class="k">final</i> <i class="t">String</i> TAG = <i class="s">"SensorInventory"</i>;</span>
+<span class="l"></span>
+<span class="l">    <i class="k">private</i> <i class="t">SensorManager</i> sensorManager;</span>
+<span class="l">    <i class="k">private</i> <i class="t">RecyclerView</i> sensorRecyclerView;</span>
+<span class="l">    <i class="k">private</i> <i class="t">SensorAdapter</i> sensorAdapter;</span>
+<span class="l">    <i class="k">private</i> <i class="t">TextView</i> deviceInfoText;</span>
+<span class="l">    <i class="k">private</i> <i class="t">TextView</i> sensorCountText;</span>
+<span class="l">    <i class="k">private</i> <i class="t">TextView</i> emptyStateText;</span>
+<span class="l">    <i class="k">private</i> <i class="t">TextView</i> comparisonText;</span>
+<span class="l">}</span>
+</pre></figure>
+
+<h3>4.2 onCreate(): Edge-to-Edge, View Binding, Initialization</h3>
+<p><code>EdgeToEdge.enable()</code> enables edge-to-edge display. <code>ViewCompat.setOnApplyWindowInsetsListener</code> applies system bar insets as padding. Views are bound, SensorManager obtained, and three population methods are called.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; onCreate</b></figcaption><pre><span class="l">    <i class="a">@Override</i></span>
+<span class="l">    <i class="k">protected</i> <i class="k">void</i> onCreate(<i class="t">Bundle</i> savedInstanceState) {</span>
+<span class="l">        <i class="k">super</i>.onCreate(savedInstanceState);</span>
+<span class="l">        EdgeToEdge.enable(<i class="k">this</i>);</span>
+<span class="l">        setContentView(<i class="t">R</i>.layout.activity_main);</span>
+<span class="l">        ViewCompat.setOnApplyWindowInsetsListener(findViewById(<i class="t">R</i>.id.main), (v, insets) -> {</span>
+<span class="l">            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());</span>
+<span class="l">            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);</span>
+<span class="l">            <i class="k">return</i> insets;</span>
+<span class="l">        });</span>
+<span class="l"></span>
+<span class="l">        initializeViews();</span>
+<span class="l">        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);</span>
+<span class="l">        populateDeviceInfo();</span>
+<span class="l">        populateSensorInventory();</span>
+<span class="l">        populateComparison();</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h3>4.3 initializeViews(): RecyclerView Setup</h3>
+<p>Binds all TextView references, configures RecyclerView with LinearLayoutManager, and attaches the SensorAdapter.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; initializeViews</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="k">void</i> initializeViews() {</span>
+<span class="l">        sensorRecyclerView = findViewById(<i class="t">R</i>.id.sensorRecyclerView);</span>
+<span class="l">        deviceInfoText = findViewById(<i class="t">R</i>.id.deviceInfoText);</span>
+<span class="l">        sensorCountText = findViewById(<i class="t">R</i>.id.sensorCountText);</span>
+<span class="l">        emptyStateText = findViewById(<i class="t">R</i>.id.emptyStateText);</span>
+<span class="l">        comparisonText = findViewById(<i class="t">R</i>.id.comparisonText);</span>
+<span class="l"></span>
+<span class="l">        sensorRecyclerView.setLayoutManager(<i class="k">new</i> LinearLayoutManager(<i class="k">this</i>));</span>
+<span class="l">        sensorAdapter = <i class="k">new</i> SensorAdapter();</span>
+<span class="l">        sensorRecyclerView.setAdapter(sensorAdapter);</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h3>4.4 populateDeviceInfo(): Device Profiling</h3>
+<p>Builds a string with manufacturer + model, Android version + API level, environment detection (emulator vs physical), and build fingerprint. Uses <code>Build</code> class fields and heuristic checks for emulator fingerprints.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; populateDeviceInfo</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="k">void</i> populateDeviceInfo() {</span>
+<span class="l">        StringBuilder info = <i class="k">new</i> StringBuilder();</span>
+<span class="l">        </span>
+<span class="l">        <i class="c">// Device model</i></span>
+<span class="l">        String model = Build.MODEL;</span>
+<span class="l">        String manufacturer = Build.MANUFACTURER;</span>
+<span class="l">        info.append(String.format(Locale.getDefault(), <i class="s">"%s %s"</i>, manufacturer, model));</span>
+<span class="l">        info.append(<i class="s">"\n"</i>);</span>
+<span class="l"></span>
+<span class="l">        <i class="c">// Android version</i></span>
+<span class="l">        String androidVersion = Build.VERSION.RELEASE;</span>
+<span class="l">        int sdkInt = Build.VERSION.SDK_INT;</span>
+<span class="l">        info.append(String.format(Locale.getDefault(), <i class="s">"Android %s (API %d)"</i>, androidVersion, sdkInt));</span>
+<span class="l">        info.append(<i class="s">"\n"</i>);</span>
+<span class="l"></span>
+<span class="l">        <i class="c">// Environment detection</i></span>
+<span class="l">        boolean isEmulator = Build.FINGERPRINT.startsWith(<i class="s">"generic"</i>)</span>
+<span class="l">                || Build.FINGERPRINT.startsWith(<i class="s">"unknown"</i>)</span>
+<span class="l">                || Build.MODEL.contains(<i class="s">"google_sdk"</i>)</span>
+<span class="l">                || Build.MODEL.contains(<i class="s">"Emulator"</i>)</span>
+<span class="l">                || Build.MODEL.contains(<i class="s">"Android SDK built for x86"</i>)</span>
+<span class="l">                || Build.HARDWARE.contains(<i class="s">"goldfish"</i>)</span>
+<span class="l">                || Build.HARDWARE.contains(<i class="s">"ranchu"</i>)</span>
+<span class="l">                || Build.PRODUCT.contains(<i class="s">"sdk"</i>)</span>
+<span class="l">                || <i class="s">"goldfish"</i>.equals(Build.HARDWARE)</span>
+<span class="l">                || <i class="s">"ranchu"</i>.equals(Build.HARDWARE);</span>
+<span class="l"></span>
+<span class="l">        String environment = isEmulator ? getString(<i class="t">R</i>.string.environment_emulator) : getString(<i class="t">R</i>.string.environment_real);</span>
+<span class="l">        info.append(String.format(Locale.getDefault(), <i class="s">"Environment: %s"</i>, environment));</span>
+<span class="l">        info.append(<i class="s">"\n"</i>);</span>
+<span class="l"></span>
+<span class="l">        <i class="c">// Fingerprint for reference</i></span>
+<span class="l">        info.append(String.format(Locale.getDefault(), <i class="s">"Build Fingerprint: %s"</i>, Build.FINGERPRINT));</span>
+<span class="l"></span>
+<span class="l">        deviceInfoText.setText(info.toString());</span>
+<span class="l">    }</span>
+</pre></figure>
+<div class="note warn"><p>&#9888;&#65039; <b>Watch out.</b> Emulator detection relies on heuristic string matching of <code>Build.FINGERPRINT</code>, <code>Build.MODEL</code>, <code>Build.HARDWARE</code>, and <code>Build.PRODUCT</code>. These can vary across emulator versions and configurations. The fingerprint is included for manual verification.</p></div>
+
+<h3>4.5 populateSensorInventory(): Enumeration & RecyclerView Population</h3>
+<p>Calls <code>sensorManager.getSensorList(Sensor.TYPE_ALL)</code>. Handles empty/null case by showing empty state. Otherwise updates the adapter and sensor count badge.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; populateSensorInventory</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="k">void</i> populateSensorInventory() {</span>
+<span class="l">        List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ALL);</span>
+<span class="l">        </span>
+<span class="l">        <i class="k">if</i> (sensors == <i class="k">null</i> || sensors.isEmpty()) {</span>
+<span class="l">            emptyStateText.setVisibility(View.VISIBLE);</span>
+<span class="l">            sensorRecyclerView.setVisibility(View.GONE);</span>
+<span class="l">            sensorCountText.setText(<i class="s">"0"</i>);</span>
+<span class="l">            <i class="k">return</i>;</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        emptyStateText.setVisibility(View.GONE);</span>
+<span class="l">        sensorRecyclerView.setVisibility(View.VISIBLE);</span>
+<span class="l">        sensorCountText.setText(String.valueOf(sensors.size()));</span>
+<span class="l"></span>
+<span class="l">        sensorAdapter.updateSensors(sensors);</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h3>4.6 populateComparison(): MavunoLink Sensor Analysis</h3>
+<p>The core analytical method. Finds key sensors (accelerometer, gyroscope, magnetometer, light, pressure), then builds a detailed comparison focused on motion tracking for agricultural use cases. Falls back gracefully when sensors are missing.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; populateComparison (part 1)</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="k">void</i> populateComparison() {</span>
+<span class="l">        List<Sensor> sensors = sensorManager.getSensorList(Sensor.TYPE_ALL);</span>
+<span class="l">        StringBuilder comparison = <i class="k">new</i> StringBuilder();</span>
+<span class="l"></span>
+<span class="l">        <i class="k">if</i> (sensors == <i class="k">null</i> || sensors.size() < 2) {</span>
+<span class="l">            comparison.append(<i class="s">"Insufficient sensors for comparison (need at least 2).\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"Emulators typically provide limited sensor sets.\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"Physical devices offer richer sensor ecosystems for MavunoLink features."</i>);</span>
+<span class="l">            comparisonText.setText(comparison.toString());</span>
+<span class="l">            <i class="k">return</i>;</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        <i class="c">// Find key sensors for comparison</i></span>
+<span class="l">        Sensor accelerometer = <i class="k">null</i>;</span>
+<span class="l">        Sensor gyroscope = <i class="k">null</i>;</span>
+<span class="l">        Sensor magnetometer = <i class="k">null</i>;</span>
+<span class="l">        Sensor light = <i class="k">null</i>;</span>
+<span class="l">        Sensor pressure = <i class="k">null</i>;</span>
+<span class="l"></span>
+<span class="l">        <i class="k">for</i> (Sensor sensor : sensors) {</span>
+<span class="l">            int type = sensor.getType();</span>
+<span class="l">            <i class="k">if</i> (type == Sensor.TYPE_ACCELEROMETER && accelerometer == <i class="k">null</i>) {</span>
+<span class="l">                accelerometer = sensor;</span>
+<span class="l">            } <i class="k">else if</i> (type == Sensor.TYPE_GYROSCOPE && gyroscope == <i class="k">null</i>) {</span>
+<span class="l">                gyroscope = sensor;</span>
+<span class="l">            } <i class="k">else if</i> (type == Sensor.TYPE_MAGNETIC_FIELD && magnetometer == <i class="k">null</i>) {</span>
+<span class="l">                magnetometer = sensor;</span>
+<span class="l">            } <i class="k">else if</i> (type == Sensor.TYPE_LIGHT && light == <i class="k">null</i>) {</span>
+<span class="l">                light = sensor;</span>
+<span class="l">            } <i class="k">else if</i> (type == Sensor.TYPE_PRESSURE && pressure == <i class="k">null</i>) {</span>
+<span class="l">                pressure = sensor;</span>
+<span class="l">            }</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        <i class="c">// Primary comparison: Accelerometer vs Gyroscope</i></span>
+<span class="l">        comparison.append(<i class="s">"Comparison: Accelerometer vs Gyroscope for MavunoLink Motion Tracking\n\n"</i>);</span>
+<span class="l"></span>
+<span class="l">        <i class="k">if</i> (accelerometer != <i class="k">null</i> && gyroscope != <i class="k">null</i>) {</span>
+<span class="l">            comparison.append(formatSensorDetails(<i class="s">"Accelerometer"</i>, accelerometer));</span>
+<span class="l">            comparison.append(<i class="s">"\n"</i>);</span>
+<span class="l">            comparison.append(formatSensorDetails(<i class="s">"Gyroscope"</i>, gyroscope));</span>
+<span class="l">            comparison.append(<i class="s">"\n"</i>);</span>
+<span class="l"></span>
+<span class="l">            comparison.append(<i class="s">"Justification for MavunoLink:\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"• Accelerometer: Low power (~0.5-2 mA), always-on capable, detects linear motion, orientation, step counting. Essential for baseline activity recognition.\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"• Gyroscope: Higher power (~3-6 mA), measures rotational velocity, enables precise gesture detection and dead-reckoning. Complements accelerometer for 6-DoF tracking.\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"• Combined: Sensor fusion (accelerometer + gyroscope) provides robust motion context for MavunoLink's agricultural tracking (equipment movement, vehicle vibration, field navigation).\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"• Battery cost: Using both continuously ~5-8 mA. Duty-cycling and batching (FIFO) reduce average draw.\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"• Measurement quality: Accelerometer noise ~100-400 µg/√Hz; Gyroscope noise ~0.01-0.05 °/s/√Hz. Calibration and temperature compensation needed for field accuracy.\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"• Device availability: Both present on virtually all modern Android devices (API 3+). Emulators may lack gyroscope or provide synthetic data.\n"</i>);</span>
+<span class="l">        } <i class="k">else if</i> (accelerometer != <i class="k">null</i> && magnetometer != <i class="k">null</i>) {</span>
+<span class="l">            comparison.append(<i class="s">"Gyroscope unavailable. Comparing Accelerometer vs Magnetometer:\n\n"</i>);</span>
+<span class="l">            comparison.append(formatSensorDetails(<i class="s">"Accelerometer"</i>, accelerometer));</span>
+<span class="l">            comparison.append(<i class="s">"\n"</i>);</span>
+<span class="l">            comparison.append(formatSensorDetails(<i class="s">"Magnetometer"</i>, magnetometer));</span>
+<span class="l">            comparison.append(<i class="s">"\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"Note: Magnetometer provides heading but is susceptible to magnetic interference (equipment, power lines). Less reliable for precision motion tracking in agricultural environments."</i>);</span>
+<span class="l">        } <i class="k">else if</i> (accelerometer != <i class="k">null</i>) {</span>
+<span class="l">            comparison.append(<i class="s">"Only accelerometer available for motion tracking.\n"</i>);</span>
+<span class="l">            comparison.append(formatSensorDetails(<i class="s">"Accelerometer"</i>, accelerometer));</span>
+<span class="l">            comparison.append(<i class="s">"\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"Limitation: Without gyroscope, cannot distinguish rotation from linear acceleration accurately. Orientation estimates drift. Step counting and gross motion detection still viable for basic MavunoLink features."</i>);</span>
+<span class="l">        } <i class="k">else</i> {</span>
+<span class="l">            comparison.append(<i class="s">"Core motion sensors unavailable. Environment may be emulator with limited sensor support.\n"</i>);</span>
+<span class="l">            comparison.append(<i class="s">"Physical device testing required for meaningful MavunoLink sensor integration analysis."</i>);</span>
+<span class="l">        }</span>
+</pre></figure>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; populateComparison (part 2: three-sensor summary)</b></figcaption><pre><span class="l">        <i class="c">// Add note about three sensors requirement</i></span>
+<span class="l">        comparison.append(<i class="s">"\n\n---\nThree-Sensor Metadata Summary:\n"</i>);</span>
+<span class="l">        int count = 0;</span>
+<span class="l">        <i class="k">for</i> (Sensor sensor : sensors) {</span>
+<span class="l">            <i class="k">if</i> (count >= 3) <i class="k">break</i>;</span>
+<span class="l">            comparison.append(formatSensorDetails(getSensorTypeName(sensor.getType()), sensor));</span>
+<span class="l">            comparison.append(<i class="s">"\n"</i>);</span>
+<span class="l">            count++;</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        comparisonText.setText(comparison.toString());</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h3>4.7 formatSensorDetails(): Standardized Metadata Formatting</h3>
+<p>Produces a consistent multi-line string for any sensor, including all metadata fields. API 24+ fields (maxDelay, FIFO, stringType, reportingMode, wakeUp) are conditionally included.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; formatSensorDetails</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="t">String</i> formatSensorDetails(<i class="t">String</i> label, Sensor sensor) {</span>
+<span class="l">        StringBuilder sb = <i class="k">new</i> StringBuilder();</span>
+<span class="l">        sb.append(label).append(<i class="s">":\n"</i>);</span>
+<span class="l">        sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%d (%s)"</i>, getString(<i class="t">R</i>.string.sensor_type_prefix), sensor.getType(), getSensorTypeName(sensor.getType()))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%s"</i>, getString(<i class="t">R</i>.string.sensor_vendor_prefix), sensor.getVendor() != <i class="k">null</i> ? sensor.getVendor() : getString(<i class="t">R</i>.string.na))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%.2f %s"</i>, getString(<i class="t">R</i>.string.sensor_range_prefix), sensor.getMaximumRange(), getUnitForSensorType(sensor.getType()))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%.6f %s"</i>, getString(<i class="t">R</i>.string.sensor_resolution_prefix), sensor.getResolution(), getUnitForSensorType(sensor.getType()))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%.2f %s"</i>, getString(<i class="t">R</i>.string.sensor_power_prefix), sensor.getPower(), getString(<i class="t">R</i>.string.unit_microampere))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%d %s"</i>, getString(<i class="t">R</i>.string.sensor_min_delay_prefix), sensor.getMinDelay(), getString(<i class="t">R</i>.string.unit_microsecond))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        </span>
+<span class="l">        <i class="k">if</i> (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {</span>
+<span class="l">            sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%d %s"</i>, getString(<i class="t">R</i>.string.sensor_max_delay_prefix), sensor.getMaxDelay(), getString(<i class="t">R</i>.string.unit_microsecond))).append(<i class="s">"\n"</i>);</span>
+<span class="l">            sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%d"</i>, getString(<i class="t">R</i>.string.sensor_fifo_reserved_prefix), sensor.getFifoReservedEventCount())).append(<i class="s">"\n"</i>);</span>
+<span class="l">            sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%d"</i>, getString(<i class="t">R</i>.string.sensor_fifo_max_prefix), sensor.getFifoMaxEventCount())).append(<i class="s">"\n"</i>);</span>
+<span class="l">            sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%s"</i>, getString(<i class="t">R</i>.string.sensor_string_type_prefix), sensor.getStringType() != <i class="k">null</i> ? sensor.getStringType() : getString(<i class="t">R</i>.string.na))).append(<i class="s">"\n"</i>);</span>
+<span class="l">            sb.append(String.format(Locale.getDefault(), <i class="s">"  %s%s"</i>, getString(<i class="t">R</i>.string.sensor_reporting_mode_prefix), getReportingModeName(sensor.getReportingMode()))).append(<i class="s">"\n"</i>);</span>
+<span class="l">            sb.append(String.format(Locale.getDefault(), <i class="s">"  %s"</i>, sensor.isWakeUpSensor() ? getString(<i class="t">R</i>.string.sensor_is_wakeup) : getString(<i class="t">R</i>.string.sensor_not_wakeup))).append(<i class="s">"\n"</i>);</span>
+<span class="l">        }</span>
+<span class="l">        </span>
+<span class="l">        <i class="k">return</i> sb.toString();</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h3>4.8 Helper Methods: Type Names, Units, Reporting Modes</h3>
+<p>Switch-based helpers map sensor type constants to human-readable names, appropriate SI units, and reporting mode strings. Reflection handles API 28+ sensor types not available as compile-time constants.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; getSensorTypeName</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="t">String</i> getSensorTypeName(int type) {</span>
+<span class="l">        <i class="k">switch</i> (type) {</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ACCELEROMETER: <i class="k">return</i> <i class="s">"Accelerometer"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GYROSCOPE: <i class="k">return</i> <i class="s">"Gyroscope"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_MAGNETIC_FIELD: <i class="k">return</i> <i class="s">"Magnetometer"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ORIENTATION: <i class="k">return</i> <i class="s">"Orientation (deprecated)"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_LIGHT: <i class="k">return</i> <i class="s">"Light"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_PRESSURE: <i class="k">return</i> <i class="s">"Pressure"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_TEMPERATURE: <i class="k">return</i> <i class="s">"Temperature (deprecated)"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_PROXIMITY: <i class="k">return</i> <i class="s">"Proximity"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GRAVITY: <i class="k">return</i> <i class="s">"Gravity"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_LINEAR_ACCELERATION: <i class="k">return</i> <i class="s">"Linear Acceleration"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ROTATION_VECTOR: <i class="k">return</i> <i class="s">"Rotation Vector"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_RELATIVE_HUMIDITY: <i class="k">return</i> <i class="s">"Relative Humidity"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_AMBIENT_TEMPERATURE: <i class="k">return</i> <i class="s">"Ambient Temperature"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED: <i class="k">return</i> <i class="s">"Magnetometer Uncalibrated"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GYROSCOPE_UNCALIBRATED: <i class="k">return</i> <i class="s">"Gyroscope Uncalibrated"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_SIGNIFICANT_MOTION: <i class="k">return</i> <i class="s">"Significant Motion"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_STEP_DETECTOR: <i class="k">return</i> <i class="s">"Step Detector"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_STEP_COUNTER: <i class="k">return</i> <i class="s">"Step Counter"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR: <i class="k">return</i> <i class="s">"Geomagnetic Rotation Vector"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_HEART_RATE: <i class="k">return</i> <i class="s">"Heart Rate"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ACCELEROMETER_UNCALIBRATED: <i class="k">return</i> <i class="s">"Accelerometer Uncalibrated"</i>;</span>
+<span class="l">            <i class="k">default</i>: </span>
+<span class="l">                <i class="c">// Handle newer sensor types with version checks</i></span>
+<span class="l">                <i class="k">if</i> (Build.VERSION.SDK_INT >= 28) {</span>
+<span class="l">                    <i class="k">try</i> {</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_TILT_DETECTOR"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Tilt Detector"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_WAKE_GESTURE"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Wake Gesture"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_GLANCE_GESTURE"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Glance Gesture"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_PICK_UP_GESTURE"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Pick Up Gesture"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_WRIST_TILT_GESTURE"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Wrist Tilt Gesture"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_DEVICE_ORIENTATION"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Device Orientation"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_POSE_6DOF"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Pose 6DoF"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_STATIONARY_DETECT"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Stationary Detect"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_MOTION_DETECT"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Motion Detect"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_HEART_BEAT"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Heart Beat"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_DYNAMIC_SENSOR_META"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Dynamic Sensor Meta"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_ADDITIONAL_INFO"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Additional Info"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_LOW_LATENCY_OFFBODY_DETECT"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Low Latency Off-body Detect"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_HINGE_ANGLE"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Hinge Angle"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_HEAD_TRACKER"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Head Tracker"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_ACCELEROMETER_LIMITED_AXES"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Accelerometer Limited Axes"</i>;</span>
+<span class="l">                        <i class="k">if</i> (type == Sensor.class.getField(<i class="s">"TYPE_GYROSCOPE_LIMITED_AXES"</i>).getInt(<i class="k">null</i>)) <i class="k">return</i> <i class="s">"Gyroscope Limited Axes"</i>;</span>
+<span class="l">                    } <i class="k">catch</i> (Exception e) {</span>
+<span class="l">                        <i class="c">// Ignore reflection errors</i></span>
+<span class="l">                    }</span>
+<span class="l">                }</span>
+<span class="l">                <i class="k">return</i> <i class="s">"Unknown ("</i> + type + <i class="s">")"</i>;</span>
+<span class="l">        }</span>
+<span class="l">    }</span>
+</pre></figure>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; getUnitForSensorType & getReportingModeName</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="t">String</i> getUnitForSensorType(int type) {</span>
+<span class="l">        <i class="k">switch</i> (type) {</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ACCELEROMETER:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GRAVITY:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_LINEAR_ACCELERATION:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_m_s2);</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GYROSCOPE:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GYROSCOPE_UNCALIBRATED:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_rad_s);</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_MAGNETIC_FIELD:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_ut);</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_LIGHT:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_lux);</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_PRESSURE:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_pa);</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_TEMPERATURE:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_AMBIENT_TEMPERATURE:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_celsius);</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_PROXIMITY:</span>
+<span class="l">                <i class="k">return</i> <i class="s">"cm"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_RELATIVE_HUMIDITY:</span>
+<span class="l">                <i class="k">return</i> <i class="s">"%"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ORIENTATION:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_ROTATION_VECTOR:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR:</span>
+<span class="l">                <i class="k">return</i> <i class="s">"radians"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_STEP_COUNTER:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_STEP_DETECTOR:</span>
+<span class="l">                <i class="k">return</i> <i class="s">"steps"</i>;</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_HEART_RATE:</span>
+<span class="l">            <i class="k">case</i> Sensor.TYPE_HEART_BEAT:</span>
+<span class="l">                <i class="k">return</i> <i class="s">"bpm"</i>;</span>
+<span class="l">            <i class="k">default</i>:</span>
+<span class="l">                <i class="k">return</i> getString(<i class="t">R</i>.string.unit_si);</span>
+<span class="l">        }</span>
+<span class="l">    }</span>
+<span class="l"></span>
+<span class="l">    <i class="k">private</i> <i class="t">String</i> getReportingModeName(int mode) {</span>
+<span class="l">        <i class="k">switch</i> (mode) {</span>
+<span class="l">            <i class="k">case</i> Sensor.REPORTING_MODE_CONTINUOUS: <i class="k">return</i> getString(<i class="t">R</i>.string.reporting_mode_continuous);</span>
+<span class="l">            <i class="k">case</i> Sensor.REPORTING_MODE_ON_CHANGE: <i class="k">return</i> getString(<i class="t">R</i>.string.reporting_mode_on_change);</span>
+<span class="l">            <i class="k">case</i> Sensor.REPORTING_MODE_ONE_SHOT: <i class="k">return</i> getString(<i class="t">R</i>.string.reporting_mode_one_shot);</span>
+<span class="l">            <i class="k">default</i>: </span>
+<span class="l">                <i class="k">if</i> (Build.VERSION.SDK_INT >= 28 && mode == 4) { <i class="c">// REPORTING_MODE_SPECIAL = 4 (API 28+)</i></span>
+<span class="l">                    <i class="k">return</i> getString(<i class="t">R</i>.string.reporting_mode_special);</span>
+<span class="l">                }</span>
+<span class="l">                <i class="k">return</i> <i class="s">"Unknown ("</i> + mode + <i class="s">")"</i>;</span>
+<span class="l">        }</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h2>5 &middot; RecyclerView Adapter (SensorAdapter)</h2>
+<p>Inner static class extending <code>RecyclerView.Adapter</code>. Manages a list of Sensor objects, inflates <code>item_sensor.xml</code>, and binds data to ViewHolder. Implements expand/collapse on item click.</p>
+
+<h3>5.1 Adapter Structure</h3>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; SensorAdapter class</b></figcaption><pre><span class="l">    <i class="k">private</i> <i class="k">static</i> <i class="k">class</i> <i class="t">SensorAdapter</i> <i class="k">extends</i> RecyclerView.Adapter<SensorAdapter.SensorViewHolder> {</span>
+<span class="l">        <i class="k">private</i> List<Sensor> sensors = <i class="k">new</i> ArrayList<>();</span>
+<span class="l"></span>
+<span class="l">        <i class="k">void</i> updateSensors(List<Sensor> newSensors) {</span>
+<span class="l">            sensors = newSensors != <i class="k">null</i> ? newSensors : <i class="k">new</i> ArrayList<>();</span>
+<span class="l">            notifyDataSetChanged();</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        <i class="a">@Override</i></span>
+<span class="l">        <i class="k">public</i> SensorViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {</span>
+<span class="l">            View view = LayoutInflater.from(parent.getContext())</span>
+<span class="l">                    .inflate(<i class="t">R</i>.layout.item_sensor, parent, <i class="k">false</i>);</span>
+<span class="l">            <i class="k">return</i> <i class="k">new</i> SensorViewHolder(view);</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        <i class="a">@Override</i></span>
+<span class="l">        <i class="k">public</i> <i class="k">void</i> onBindViewHolder(SensorViewHolder holder, int position) {</span>
+<span class="l">            Sensor sensor = sensors.get(position);</span>
+<span class="l">            holder.bind(sensor);</span>
+<span class="l">        }</span>
+<span class="l"></span>
+<span class="l">        <i class="a">@Override</i></span>
+<span class="l">        <i class="k">public</i> int getItemCount() {</span>
+<span class="l">            <i class="k">return</i> sensors.size();</span>
+<span class="l">        }</span>
+<span class="l">    }</span>
+</pre></figure>
+
+<h3>5.2 SensorViewHolder: View Binding & Data Population</h3>
+<p>Binds all TextView references in constructor. <code>bind()</code> populates summary fields, fills detail fields (with API 24+ guards), and sets up click listener for expand/collapse toggle.</p>
+<figure class="code"><figcaption>MainActivity.java <b>&middot; SensorViewHolder (abridged)</b></figcaption><pre><span class="l">        <i class="k">static</i> <i class="k">class</i> SensorViewHolder <i class="k">extends</i> RecyclerView.ViewHolder {</span>
+<span class="l">            TextView sensorNameText, sensorTypeText;</span>
+<span class="l">            View detailsContainer;</span>
+<span class="l">            TextView sensorVendorText, sensorRangeText, sensorResolutionText;</span>
+<span class="l">            TextView sensorPowerText, sensorMinDelayText, sensorMaxDelayText;</span>
+<span class="l">            TextView sensorFifoReservedText, sensorFifoMaxText;</span>
+<span class="l">            TextView sensorStringTypeText, sensorReportingModeText, sensorWakeupText;</span>
+<span class="l">            TextView toggleDetailsText;</span>
+<span class="l"></span>
+<span class="l">            SensorViewHolder(View itemView) {</span>
+<span class="l">                <i class="k">super</i>(itemView);</span>
+<span class="l">                sensorNameText = itemView.findViewById(<i class="t">R</i>.id.sensorNameText);</span>
+<span class="l">                sensorTypeText = itemView.findViewById(<i class="t">R</i>.id.sensorTypeText);</span>
+<span class="l">                detailsContainer = itemView.findViewById(<i class="t">R</i>.id.detailsContainer);</span>
+<span class="l">                sensorVendorText = itemView.findViewById(<i class="t">R</i>.id.sensorVendorText);</span>
+<span class="l">                sensorRangeText = itemView.findViewById(<i class="t">R</i>.id.sensorRangeText);</span>
+<span class="l">                sensorResolutionText = itemView.findViewById(<i class="t">R</i>.id.sensorResolutionText);</span>
+<span class="l">                sensorPowerText = itemView.findViewById(<i class="t">R</i>.id.sensorPowerText);</span>
+<span class="l">                sensorMinDelayText = itemView.findViewById(<i class="t">R</i>.id.sensorMinDelayText);</span>
+<span class="l">                sensorMaxDelayText = itemView.findViewById(<i class="t">R</i>.id.sensorMaxDelayText);</span>
+<span class="l">                sensorFifoReservedText = itemView.findViewById(<i class="t">R</i>.id.sensorFifoReservedText);</span>
+<span class="l">                sensorFifoMaxText = itemView.findViewById(<i class="t">R</i>.id.sensorFifoMaxText);</span>
+<span class="l">                sensorStringTypeText = itemView.findViewById(<i class="t">R</i>.id.sensorStringTypeText);</span>
+<span class="l">                sensorReportingModeText = itemView.findViewById(<i class="t">R</i>.id.sensorReportingModeText);</span>
+<span class="l">                sensorWakeupText = itemView.findViewById(<i class="t">R</i>.id.sensorWakeupText);</span>
+<span class="l">                toggleDetailsText = itemView.findViewById(<i class="t">R</i>.id.toggleDetailsText);</span>
+<span class="l">            }</span>
+<span class="l"></span>
+<span class="l">            <i class="k">void</i> bind(Sensor sensor) {</span>
+<span class="l">                Context context = itemView.getContext();</span>
+<span class="l">                sensorNameText.setText(sensor.getName());</span>
+<span class="l">                sensorTypeText.setText(String.format(Locale.getDefault(), <i class="s">"%s %d (%s)"</i>,</span>
+<span class="l">                        context.getString(<i class="t">R</i>.string.sensor_type_prefix),</span>
+<span class="l">                        sensor.getType(),</span>
+<span class="l">                        getSensorTypeNameStatic(sensor.getType())));</span>
+<span class="l"></span>
+<span class="l">                <i class="c">// Populate all detail fields (omitted for brevity; see full source)</i></span>
+<span class="l">                <i class="c">// API 24+ fields guarded by Build.VERSION.SDK_INT check</i></span>
+<span class="l"></span>
+<span class="l">                <i class="c">// Toggle details on click</i></span>
+<span class="l">                itemView.setOnClickListener(v -> {</span>
+<span class="l">                    <i class="k">if</i> (detailsContainer.getVisibility() == View.VISIBLE) {</span>
+<span class="l">                        detailsContainer.setVisibility(View.GONE);</span>
+<span class="l">                        toggleDetailsText.setText(context.getString(<i class="t">R</i>.string.show_details));</span>
+<span class="l">                    } <i class="k">else</i> {</span>
+<span class="l">                        detailsContainer.setVisibility(View.VISIBLE);</span>
+<span class="l">                        toggleDetailsText.setText(context.getString(<i class="t">R</i>.string.hide_details));</span>
+<span class="l">                    }</span>
+<span class="l">                });</span>
+<span class="l">            }</span>
+<span class="l">        }</span>
+</pre></figure>
+<div class="note tip"><p>&#128161; <b>Tip.</b> The adapter and ViewHolder are <code>static</code> to avoid implicit reference to the enclosing Activity, preventing memory leaks. Helper methods (<code>getSensorTypeNameStatic</code>, <code>getUnitForSensorTypeStatic</code>, <code>getReportingModeNameStatic</code>) are also static and accept Context for string resources.</p></div>
+
+<h2>6 &middot; Resource Files</h2>
+
+<h3>6.1 Strings (strings.xml)</h3>
+<p>All user-facing text is externalized for maintainability and localization readiness.</p>
+<figure class="code"><figcaption>strings.xml <b>&middot; complete</b></figcaption><pre><span class="l"><i class="c"><resources></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"app_name"</i>>Sensor Inventory<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"device_info_title"</i>>Device Information<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_inventory_title"</i>>Sensor Inventory<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"comparison_title"</i>>Sensor Comparison for MavunoLink<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"no_sensors_found"</i>>No sensors available on this device<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_type_prefix"</i>>Type: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_vendor_prefix"</i>>Vendor: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_range_prefix"</i>>Range: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_resolution_prefix"</i>>Resolution: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_power_prefix"</i>>Power: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_min_delay_prefix"</i>>Min Delay: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_max_delay_prefix"</i>>Max Delay: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_fifo_reserved_prefix"</i>>FIFO Reserved: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_fifo_max_prefix"</i>>FIFO Max: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_string_type_prefix"</i>>String Type: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_reporting_mode_prefix"</i>>Reporting Mode: <i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_is_wakeup"</i>>Wake-up Sensor<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"sensor_not_wakeup"</i>>Regular Sensor<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"environment_real"</i>>Physical Device<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"environment_emulator"</i>>Emulator<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unknown"</i>>Unknown<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"na"</i>>N/A<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_si"</i>>SI units<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_m_s2"</i>>m/s²<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_rad_s"</i>>rad/s<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_ut"</i>>µT<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_lux"</i>>lux<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_pa"</i>>Pa<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_celsius"</i>>°C<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_hz"</i>>Hz<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_microampere"</i>>µA<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"unit_microsecond"</i>>µs<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"reporting_mode_continuous"</i>>Continuous<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"reporting_mode_on_change"</i>>On Change<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"reporting_mode_one_shot"</i>>One Shot<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"reporting_mode_special"</i>>Special<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"show_details"</i>>Show Details ▼<i class="k"></string></i></span>
+<span class="l">    <i class="k"><string</i> <i class="a">name</i>=<i class="s">"hide_details"</i>>Hide Details ▲<i class="k"></string></i></span>
+<span class="l"><i class="k"></resources></i></span>
+</pre></figure>
+
+<h3>6.2 Themes (themes.xml)</h3>
+<p>Material3 theme inheriting from <code>Theme.Material3.DayNight.NoActionBar</code> with custom color palette.</p>
+<figure class="code"><figcaption>themes.xml <b>&middot; complete</b></figcaption><pre><span class="l"><i class="c"><resources></i></span>
+<span class="l">    <i class="k"><style</i> <i class="a">name</i>=<i class="s">"Theme.SensorInventory"</i> <i class="a">parent</i>=<i class="s">"Theme.Material3.DayNight.NoActionBar"</i>></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"colorPrimary"</i>>@color/teal_700<i class="k"></item></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"colorPrimaryVariant"</i>>@color/teal_800<i class="k"></item></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"colorOnPrimary"</i>>@color/white<i class="k"></item></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"colorSecondary"</i>>@color/teal_200<i class="k"></item></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"colorSecondaryVariant"</i>>@color/teal_700<i class="k"></item></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"colorOnSecondary"</i>>@color/black<i class="k"></item></i></span>
+<span class="l">        <i class="k"><item</i> <i class="a">name</i>=<i class="s">"android:statusBarColor"</i>>?attr/colorPrimaryVariant<i class="k"></item></i></span>
+<span class="l">    <i class="k"></style></i></span>
+<span class="l"><i class="k"></resources></i></span>
+</pre></figure>
+
+<h3>6.3 Badge Background (badge_background.xml)</h3>
+<p>Rounded drawable for the sensor count badge in the inventory card header.</p>
+<figure class="code"><figcaption>badge_background.xml</figcaption><pre><span class="l"><i class="c"><?xml version="1.0" encoding="utf-8"?></i></span>
+<span class="l"><i class="k"><shape</i> <i class="a">xmlns:android</i>=<i class="s">"http://schemas.android.com/apk/res/android"</i></span>
+<span class="l">    <i class="a">android:shape</i>=<i class="s">"rectangle"</i>></i></span>
+<span class="l">    <i class="k"><solid</i> <i class="a">android:color</i>=<i class="s">"?attr/colorPrimary"</i> /></span>
+<span class="l">    <i class="k"><corners</i> <i class="a">android:radius</i>=<i class="s">"12dp"</i> /></span>
+<span class="l"><i class="k"></shape></i></span>
+</pre></figure>
+
+<h2>7 &middot; Build Configuration</h2>
+<p>Module-level <code>build.gradle.kts</code> configures namespace, compile/target SDK, and dependencies.</p>
+<figure class="code"><figcaption>app/build.gradle.kts <b>&middot; key configuration</b></figcaption><pre><span class="l"><i class="c">// app/build.gradle.kts</i></span>
+<span class="l">plugins {</span>
+<span class="l">    id(<i class="s">"com.android.application"</i>)</span>
+<span class="l">    id(<i class="s">"org.jetbrains.kotlin.android"</i>)</span>
+<span class="l">}</span>
+<span class="l"></span>
+<span class="l">android {</span>
+<span class="l">    namespace = <i class="s">"com.example.sensorinventory"</i></span>
+<span class="l">    compileSdk = 34</span>
+<span class="l"></span>
+<span class="l">    defaultConfig {</span>
+<span class="l">        applicationId = <i class="s">"com.example.sensorinventory"</i></span>
+<span class="l">        minSdk = 24</span>
+<span class="l">        targetSdk = 34</span>
+<span class="l">        versionCode = 1</span>
+<span class="l">        versionName = <i class="s">"1.0"</i></span>
+<span class="l">        testInstrumentationRunner = <i class="s">"androidx.test.runner.AndroidJUnitRunner"</i></span>
+<span class="l">    }</span>
+<span class="l"></span>
+<span class="l">    buildTypes {</span>
+<span class="l">        release {</span>
+<span class="l">            isMinifyEnabled = false</span>
+<span class="l">            proguardFiles(getDefaultProguardFile(<i class="s">"proguard-android-optimize.txt"</i>), <i class="s">"proguard-rules.pro"</i>)</span>
+<span class="l">        }</span>
+<span class="l">    }</span>
+<span class="l">    compileOptions {</span>
+<span class="l">        sourceCompatibility = JavaVersion.VERSION_17</span>
+<span class="l">        targetCompatibility = JavaVersion.VERSION_17</span>
+<span class="l">    }</span>
+<span class="l">    kotlinOptions { jvmTarget = <i class="s">"17"</i> }</span>
+<span class="l">}</span>
+<span class="l"></span>
+<span class="l">dependencies {</span>
+<span class="l">    implementation(<i class="s">"androidx.core:core-ktx:1.12.0"</i>)</span>
+<span class="l">    implementation(<i class="s">"androidx.appcompat:appcompat:1.6.1"</i>)</span>
+<span class="l">    implementation(<i class="s">"com.google.android.material:material:1.11.0"</i>)</span>
+<span class="l">    implementation(<i class="s">"androidx.constraintlayout:constraintlayout:2.1.4"</i>)</span>
+<span class="l">    implementation(<i class="s">"androidx.recyclerview:recyclerview:1.3.2"</i>)</span>
+<span class="l">    implementation(<i class="s">"androidx.cardview:cardview:1.0.0"</i>)</span>
+<span class="l">    implementation(<i class="s">"androidx.activity:activity:1.8.2"</i>)</span>
+<span class="l">    testImplementation(<i class="s">"junit:junit:4.13.2"</i>)</span>
+<span class="l">    androidTestImplementation(<i class="s">"androidx.test.ext:junit:1.1.5"</i>)</span>
+<span class="l">    androidTestImplementation(<i class="s">"androidx.test.espresso:espresso-core:3.5.1"</i>)</span>
+<span class="l">}</span>
+</pre></figure>
+
+<h2>8 &middot; Manifest</h2>
+<figure class="code"><figcaption>AndroidManifest.xml</figcaption><pre><span class="l"><i class="c"><?xml version="1.0" encoding="utf-8"?></i></span>
+<span class="l"><i class="k"><manifest</i> <i class="a">xmlns:android</i>=<i class="s">"http://schemas.android.com/apk/res/android"</i>></span>
+<span class="l">    <i class="k"><application</i></span>
+<span class="l">        <i class="a">android:allowBackup</i>=<i class="s">"true"</i></span>
+<span class="l">        <i class="a">android:icon</i>=<i class="s">"@mipmap/ic_launcher"</i></span>
+<span class="l">        <i class="a">android:label</i>=<i class="s">"@string/app_name"</i></span>
+<span class="l">        <i class="a">android:roundIcon</i>=<i class="s">"@mipmap/ic_launcher_round"</i></span>
+<span class="l">        <i class="a">android:supportsRtl</i>=<i class="s">"true"</i></span>
+<span class="l">        <i class="a">android:theme</i>=<i class="s">"@style/Theme.SensorInventory"</i>></span>
+<span class="l"></span>
+<span class="l">        <i class="k"><activity</i></span>
+<span class="l">            <i class="a">android:name</i>=<i class="s">".MainActivity"</i></span>
+<span class="l">            <i class="a">android:exported</i>=<i class="s">"true"</i></span>
+<span class="l">            <i class="a">android:label</i>=<i class="s">"@string/app_name"</i></span>
+<span class="l">            <i class="a">android:theme</i>=<i class="s">"@style/Theme.SensorInventory"</i>></span>
+<span class="l">            <i class="k"><intent-filter></i></span>
+<span class="l">                <i class="k"><action</i> <i class="a">android:name</i>=<i class="s">"android.intent.action.MAIN"</i> /></span>
+<span class="l">                <i class="k"><category</i> <i class="a">android:name</i>=<i class="s">"android.intent.category.LAUNCHER"</i> /></span>
+<span class="l">            <i class="k"></intent-filter></i></span>
+<span class="l">        <i class="k"></activity></i></span>
+<span class="l">    <i class="k"></application></i></span>
+<span class="l"><i class="k"></manifest></i></span>
+</pre></figure>
+
+<h2>9 &middot; Testing & Verification</h2>
+<div class="grid">
+<div class="card"><b>Physical Device</b><span>Full sensor set (15-25+ sensors). Accelerometer + Gyroscope comparison renders. All detail fields populated.</span></div>
+<div class="card"><b>Emulator</b><span>Minimal sensors (often only accelerometer). Comparison falls back gracefully. Empty state not shown but limited inventory.</span></div>
+<div class="card"><b>Expand/Collapse</b><span>Tap any sensor card &rarr; detailsContainer toggles visibility. Toggle label updates (▼/▲).</span></div>
+<div class="card"><b>Edge-to-Edge</b><span>System bars draw behind content; insets applied as padding via ViewCompat listener.</span></div>
+</div>
+
+<h2>10 &middot; Key Takeaways</h2>
+<ul>
+<li><b>SensorManager.getSensorList(TYPE_ALL)</b> is the single entry point for hardware sensor discovery.</li>
+<li><b>RecyclerView + CardView</b> provides performant, Material-styled lists with built-in view recycling.</li>
+<li><b>Expandable item pattern</b> (summary + hidden details container + click toggle) keeps UI clean while exposing deep metadata.</li>
+<li><b>Build class heuristics</b> enable emulator vs physical device detection for contextual UX.</li>
+<li><b>API version guards</b> (<code>Build.VERSION.SDK_INT >= Build.VERSION_CODES.N</code>) allow using newer Sensor APIs while maintaining minSdk 24 compatibility.</li>
+<li><b>Domain-specific comparison logic</b> transforms raw sensor specs into actionable engineering justification for MavunoLink's agricultural tracking requirements.</li>
+<li><b>Static inner adapter/ViewHolder</b> prevents memory leaks; static helper methods accept Context for resource access.</li>
+<li><b>Material3 theming</b> with semantic color roles (colorPrimary, colorOnSurfaceVariant, etc.) ensures consistent light/dark mode support.</li>
+</ul>
+
+<div class="note tip"><p>&#128161; <b>Extension ideas.</b> Add sensor event listening (registerListener) to show live readings. Implement CSV/JSON export of the inventory. Add sensor availability matrix across device fleet. Integrate with MavunoLink backend for device capability profiling.</p></div>
+
+</main></body></html>
